@@ -255,14 +255,16 @@ public class ProMeshImpl implements ProMesh {
             arguments = new String[]{"-help"};
         }
 
-        String[] cmd = new String[arguments.length + 1];
+        int numSysCallArgs = 1;
+
+        String[] cmd = new String[arguments.length + numSysCallArgs];
 
         System.out.println("path: " + executableFile.getAbsolutePath());
 
         cmd[0] = executableFile.getAbsolutePath();
 
-        for (int i = 1; i < cmd.length; i++) {
-            cmd[i] = arguments[i - 1];
+        for (int i = numSysCallArgs; i < cmd.length; i++) {
+            cmd[i] = arguments[i - numSysCallArgs];
         }
 
         Process proc = null;
@@ -378,7 +380,7 @@ class StreamGobbler extends Thread {
                 pw.println(prefix + line);
             }
         } catch (IOException ioe) {
-            ioe.printStackTrace(System.err);
+            // we don't want errors about showing error messages
         }
     }
 
