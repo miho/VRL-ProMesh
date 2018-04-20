@@ -1,0 +1,115 @@
+buildscript {
+
+    repositories {
+        mavenCentral()
+        jcenter()
+    }
+
+    dependencies {
+        classpath (group: 'eu.mihosoft.vrl', name: 'vrl', version: '0.4.3.2.3')
+    }
+}
+
+plugins {
+//    id 'com.github.hierynomus.license' version '0.13.1'
+    id 'maven-publish'
+    id 'net.nemerosa.versioning' version '2.4.0'
+    id 'com.jfrog.bintray' version '1.7.2'
+    id 'com.github.ben-manes.versions' version '0.13.0'
+}
+
+apply plugin: 'java'
+apply from: 'gradle/publishing.gradle'
+
+sourceCompatibility = '1.8'
+[compileJava, compileTestJava]*.options*.encoding = 'UTF-8'
+
+ext.VRL_VERSION = '0.4.3.2.3'
+
+tasks.withType(Javadoc) {
+    options.addStringOption('Xdoclint:none', '-quiet')
+}
+
+task wrapper(type: Wrapper, description: 'Creates and deploys the Gradle wrapper to the current directory.') {
+    gradleVersion = '4.6'
+}
+
+//if (!hasProperty('mainClass')) {
+//    ext.mainClass = 'eu.mihosoft.ugshell.Main'
+//}
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.10'
+    compile (group: 'eu.mihosoft.vrl', name: 'vrl', version: VRL_VERSION)
+}
+
+//task run(type: JavaExec) {
+//    classpath = sourceSets.main.runtimeClasspath
+//    main = mainClass;
+//    jvmArgs = ['-Dprism.forceGPU=true', '-Dprism.verbose=true', '-Dprism.order=es2,d3d,sw']
+//}
+
+
+test {
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
+}
+
+def loadProperties(String sourceFileName) {
+
+    def config = new Properties()
+    def propFile = new File(projectDir,sourceFileName)
+
+    if (propFile.isFile()) {
+        config.load(new FileInputStream(propFile))
+        for (Map.Entry property in config) {
+            ext.set(property.key, property.value)
+        }
+    }
+}
+
+jar {
+    // project class files compiled from source
+    from files(sourceSets.main.output.classesDirs)
+}
+
+// loads the property file
+loadProperties('build.properties')
+
+String getVRLDir() {
+
+    String result;
+
+    if (vrldir.isEmpty()) {
+        result = System.getProperty("user.home");
+        result+= "/.vrl/"
+        result+= eu.mihosoft.vrl.system.Constants.VERSION_MAJOR
+        result+= "/default"
+    } else {
+        result = vrldir;
+    }
+
+    return result
+}
+
+// compiles and installs the vrl plugin to the specified folder
+task installVRLPlugin(dependsOn: [clean, publicationVRLPluginJar]) {
+    doLast {
+        println(">> copying vrl plugin to: " + getVRLDir() + "/plugin-updates")
+
+        copy {
+            from buildDir.getPath() + "/libs/" + rootProject.name + ".vrlplugin"
+            into getVRLDir() + "/plugin-updates/"
+            include rootProject.name + ".vrlplugin"
+            rename (rootProject.name + ".vrlplugin", rootProject.name + ".jar")
+        }
+    }
+}

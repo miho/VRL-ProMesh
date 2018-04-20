@@ -1,0 +1,7 @@
+/.nb-gradle/
+/.gradle/
+/build/
+.idea/
+VTCC.iml
+out
+
